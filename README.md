@@ -123,8 +123,8 @@ Workflow en `.github/workflows/ci-cd.yml`, se ejecuta con cada push a `main` y `
 
 Secrets usados: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `AZURE_CREDENTIALS`, `AZURE_WEBAPP_NAME`, `JWT_SECRET`.
 
-<!-- TODO: ![Workflow en verde](docs/images/pipeline.png) -->
+![Workflow en verde](docs/images/pipeline.png)
 
 ## 11. Herramientas de modelado y diseño (evidencias)
-<!-- TODO: ![Cuenta Lucidchart/Draw.io/Miro](docs/images/modelado.png) -->
-<!-- TODO: ![Cuenta Figma](docs/images/figma.png) -->
+![Cuenta Lucidchart/Draw.io/Miro](docs/images/modelado.png)
+![Cuenta Figma](docs/images/figma.png)
