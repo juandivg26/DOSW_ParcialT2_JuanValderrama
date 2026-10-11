@@ -126,5 +126,5 @@ Secrets usados: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `AZURE_CREDENTIALS`, `A
 ![Workflow en verde](docs/images/pipeline.png)
 
 ## 11. Herramientas de modelado y diseño (evidencias)
-![Cuenta Lucidchart/Draw.io/Miro](docs/images/modelado.png)
+![Cuenta Draw.io](docs/images/modelado.png)
 ![Cuenta Figma](docs/images/figma.png)
