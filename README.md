@@ -31,6 +31,10 @@ Por ahora solo expone un endpoint de salud y la documentación Swagger; la lógi
 | Health | https://dosw-parcialt2-juanvalderrama.azurewebsites.net/api/v1/health |
 | Swagger | https://dosw-parcialt2-juanvalderrama.azurewebsites.net/swagger-ui/index.html |
 
+![Health en Azure](docs/images/azure-health.png)
+
+![Swagger en Azure](docs/images/azure-swagger.png)
+
 ## 4. Estructura del proyecto
 ```
 DOSW_ParcialT2_JuanValderrama/
@@ -101,15 +105,15 @@ mvn test
 ```
 Reporte Jacoco: `target/site/jacoco/index.html`.
 
-<!-- TODO: ![Pruebas en verde](docs/images/tests.png) -->
-<!-- TODO: ![Reporte Jacoco](docs/images/jacoco.png) -->
+![Pruebas en verde](docs/images/tests.png)
+![Reporte Jacoco](docs/images/jacoco.png)
 
 ## 9. Docker
 ```bash
 docker build -t dosw-parcial:local .
 docker run -p 8080:8080 -e JWT_SECRET=<secret_base64> dosw-parcial:local
 ```
-<!-- TODO: ![Contenedor corriendo](docs/images/docker.png) -->
+![Contenedor corriendo](docs/images/docker.png)
 
 ## 10. CI/CD
 Workflow en `.github/workflows/ci-cd.yml`, se ejecuta con cada push a `main` y `develop`:
