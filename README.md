@@ -27,9 +27,9 @@ Por ahora solo expone un endpoint de salud y la documentación Swagger; la lógi
 ## 3. Despliegue
 | Recurso | URL |
 |---|---|
-| Servicio en Azure | `https://<nombre>.azurewebsites.net` <!-- TODO --> |
-| Health | `https://<nombre>.azurewebsites.net/api/v1/health` |
-| Swagger | `https://<nombre>.azurewebsites.net/swagger-ui/index.html` |
+| Servicio en Azure | https://dosw-parcialt2-juanvalderrama.azurewebsites.net |
+| Health | https://dosw-parcialt2-juanvalderrama.azurewebsites.net/api/v1/health |
+| Swagger | https://dosw-parcialt2-juanvalderrama.azurewebsites.net/swagger-ui/index.html |
 
 ## 4. Estructura del proyecto
 ```
