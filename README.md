@@ -16,9 +16,9 @@
 ## 1. Datos del estudiante
 | Campo | Valor |
 |---|---|
-| Nombre completo | Juan Valderrama <!-- TODO: nombre completo --> |
-| Grupo | TODO |
-| Profesor agregado al repositorio | ✔ <!-- TODO: confirmar --> |
+| Nombre completo | Juan Diego Valderrama Gaviria |
+| Grupo | Grupo 1 |
+| Profesor agregado al repositorio | si |
 
 ## 2. Descripción del proyecto
 Servicio REST base del Parcial Práctico del segundo tercio de DOSW. Está construido con Spring Boot y MongoDB siguiendo una arquitectura MVC por capas (controller, core, persistence).
