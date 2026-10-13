@@ -132,6 +132,7 @@ Secrets usados: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `AZURE_CREDENTIALS`, `A
 ## SOLUCION DEL PARCIAL
 ### 1
 Excel en la ruta : docs/Punto1Parcial.xlsx
+
 (a). ¿Diferencia entre validación de entrada y de negocio? Clasifique tres reglas. 
 
 Una validación de entrada revisa que los datos enviados tengan la forma, el tipo y los límites exigidos por el contrato y valida los DTOs con @Valid. Una validación de negocio decide si la operación es permitida según el estado del sistema y las reglas del caso.
