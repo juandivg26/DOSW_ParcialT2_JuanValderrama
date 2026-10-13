@@ -157,3 +157,42 @@ Secrets usados: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `AZURE_CREDENTIALS`, `A
 **Desventaja:** Las referencias requieren consultas extra o agregaciones ($lookup); actualizar una adopción puede involucrar varios documentos y exigir medidas de consistencia. Embeber historial ilimitado inflaría los documentos y dificultaría las actualizaciones.
 
 
+## PUNTO 4
+
+**A)**
+
+**UBICACION Y EJEMPLOS:**
+
+`AUTENTICACION:` Login valida email/BCrypt y emite JWT firmado. Un filtro comprueba token en peticiones protegidas. 
+
+`AUTORIZACION:` ADMIN puede crear mascota; ADOPTANTE puede adoptar. Aplazar exige además ser titular de la solicitud. 
+
+`INTEGRIDAD:` @Valid, invariantes del service, índices, actualizaciones atómicas; firma JWT detecta alteración del token. 
+
+La autenticación inválida genera normalmente 401; un usuario autenticado sin permiso genera 403. La integridad no equivale a confidencialidad: esta última se protege además mediante HTTPS, control de acceso y manejo seguro de secretos. 
+
+**B)**
+
+**Riesgo 1 — A01: Broken Access Control (control de acceso roto)**
+
+`Escenario:` un ADOPTANTE llama PATCH /api/v1/adopciones/{id}/recibimiento con el ID de la solicitud de otro adoptante; o llama POST /api/v1/mascotas para crear una mascota, función reservada a ADMIN.
+
+**Mitigación.** Verificar roles con Spring Security y comprobar en el servicio la titularidad usando el usuario autenticado del JWT. No confiar en adoptanteId enviado desde el body. Aplicar denegación por defecto.
+
+**Cómo probarlo.** Enviar petición sin token → 401; token ADOPTANTE a crear mascota → 403; token de adoptante A sobre solicitud de B → 403 y sin cambio en Mongo. Token ADMIN a creación válida → 201.
+
+**Riesgo 2 — A07: Identification and Authentication Failures**
+
+`Escenario:` contraseñas almacenadas en texto plano, login sin control ante intentos masivos, JWT aceptado sin validar su firma o expiración, o mensajes que revelan si un correo existe.
+
+**Mitigación.** Guardar contraseñas con BCrypt/PasswordEncoder; JWT firmado y de vida limitada; JWT_SECRET privado, HTTPS, errores genéricos, validación del usuario activo, límites de intentos y monitoreo de accesos fallidos.
+
+**Cómo probarlo.** Contraseña incorrecta → 401 sin distinguir usuario existente/no existente; token expirado o firma modificada → 401; inspección de Mongo para comprobar hash y no password en texto; nunca mostrar secreto ni token completo en logs. 
+
+**C)**
+
+`Propuesta:` autenticación con correo/contraseña y JWT Bearer mediante Spring Security, API stateless. Los usuarios ya están precargados en MongoDB, el login público valida la contraseña comparando el hash BCrypt y devuelve un token firmado; el cliente lo envía en Authorization: Bearer <token>. En cada operación la API valida token, expiración, usuario, rol y titularidad según corresponda.
+
+`Justificación:` permite separar autenticación de las operaciones REST y probar fácilmente el acceso en Swagger Authorize, sin sesiones de servidor. No sustituye la seguridad de transporte HTTPS. Para un MVP académico resulta apropiado si se controla la expiración, el secreto, la autorización y la protección de credenciales.
+
+`Enunciado contradictorio:` la matriz dice “Iniciar sesión: sin token → 401”, pero el login necesita aceptar credenciales sin token previo. Debe corregirse esa fila en el contrato y justificarlo. 
