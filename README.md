@@ -129,6 +129,27 @@ Secrets usados: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `AZURE_CREDENTIALS`, `A
 ![Cuenta Draw.io](docs/images/modelado.png)
 ![Cuenta Figma](docs/images/figma.png)
 
+## SOLUCION DEL PARCIAL
+### 1
+Excel en la ruta : docs/Punto1Parcial.xlsx
+
+(a). ¿Diferencia entre validación de entrada y de negocio? Clasifique tres reglas. 
+
+Una validación de entrada revisa que los datos enviados tengan la forma, el tipo y los límites exigidos por el contrato y valida los DTOs con @Valid. Una validación de negocio decide si la operación es permitida según el estado del sistema y las reglas del caso.
+
+| Regla del caso | Clasificación | Justificación |
+| --- | --- | --- |
+| Edad de 0 a 360 meses | Entrada | Rango numérico conocido sin consultar otros documentos | 
+| El nodo de origen debe existir y ser REFUGIO | Negocio | Depende de la jerarquía y datos persistidos en MongoDB. |
+| Un adoptante solo puede tener una solicitud activa | Negocio | Requiere conocer solicitudes actuales del adoptante y prevenir carreras. |
+
+ También son reglas de negocio que la mascota esté DISPONIBLE y que su compatibilidad coincida con la declaración de la persona. 
+
+(b). Si fallan varias condiciones al adoptar, ¿qué error responde la API y qué evita modificar? 
+
+Debe definirse una prioridad en las validaciones; no debe depender del orden accidental de consultas o fallos. Propuesta 1 autenticación y rol (401/403); 2 formato DTO (400); 3 existencia de mascota (404); 4 estado DISPONIBLE y solicitud activa (409); 5 compatibilidad y fecha (422). Si un mismo paso detecta múltiples errores de entrada, se pueden devolver todos los campos inválidos en un 400. 
+
+Cualquiera que sea el primer error de negocio reportado, no debe crearse la solicitud, ni modificarse mascota.estado, ni registrarse aplazamiento o actividad parcial.
 
 
 
