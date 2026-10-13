@@ -129,8 +129,8 @@ Secrets usados: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `AZURE_CREDENTIALS`, `A
 ![Cuenta Draw.io](docs/images/modelado.png)
 ![Cuenta Figma](docs/images/figma.png)
 
-## SOLUCION DL PARCIAL
-# 1
+## SOLUCION DEL PARCIAL
+### 1
 Excel en la ruta : docs/Punto1Parcial.xlsx
 (a). ¿Diferencia entre validación de entrada y de negocio? Clasifique tres reglas. 
 
