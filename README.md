@@ -130,7 +130,7 @@ Secrets usados: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `AZURE_CREDENTIALS`, `A
 ![Cuenta Figma](docs/images/figma.png)
 
 ## SOLUCION DEL PARCIAL
-### 1
+### PUNTO 1
 Excel en la ruta : docs/Punto1Parcial.xlsx
 
 (a). ¿Diferencia entre validación de entrada y de negocio? Clasifique tres reglas. 
@@ -163,7 +163,7 @@ Cualquiera que sea el primer error de negocio reportado, no debe crearse la soli
 
 
 
-## PUNTO 3
+### PUNTO 3
 **Propuesta:** usar ambos. Embebidos para datos pequeños que se consultan con su padre y cambian con él; referenciados para entidades compartidas, consultadas independientemente o que crecen con el tiempo. 
 
 | Documento | Modelo Recomendado | Justificacion                                                                   |
@@ -178,7 +178,7 @@ Cualquiera que sea el primer error de negocio reportado, no debe crearse la soli
 **Desventaja:** Las referencias requieren consultas extra o agregaciones ($lookup); actualizar una adopción puede involucrar varios documentos y exigir medidas de consistencia. Embeber historial ilimitado inflaría los documentos y dificultaría las actualizaciones.
 
 
-## PUNTO 4
+### PUNTO 4
 
 **A)**
 
