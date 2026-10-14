@@ -157,3 +157,38 @@ Secrets usados: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `AZURE_CREDENTIALS`, `A
 **Desventaja:** Las referencias requieren consultas extra o agregaciones ($lookup); actualizar una adopción puede involucrar varios documentos y exigir medidas de consistencia. Embeber historial ilimitado inflaría los documentos y dificultaría las actualizaciones.
 
 
+### Punto 6
+
+**A)**
+
+| Etapa | Propósito y acciones típicas |
+| --- | --- |
+| Trigger / checkout | Push o integración en develop; descargar versión exacta del commit. |
+| Setup | Instalar Java 21 y preparar caché/dependencias Maven. |
+| Build y pruebas | Compilar, ejecutar JUnit/Mockito y producir JaCoCo (>80 % según enunciado). |
+| Calidad y seguridad | Análisis estático, validación de dependencias y rechazo de hallazgos graves. |
+| Empaquetar imagen | Construir JAR y Dockerfile reproducible; etiquetar imagen con SHA. |
+| Publicar artefacto | Autenticación segura y push a Docker Hub. |
+| Deploy Azure | Desplegar la imagen exacta en App Service usando secretos. |
+| Smoke / verificación | Probar endpoint de health/Swagger y caso básico; guardar evidencia y logs. |
+
+**B)**
+
+No. El pipeline debe interrumpirse y marcar la ejecución como fallida. En Actions el job de build/deploy depende de test (needs: test); si este falla, no se publica ni despliega esa versión. Esto evita distribuir un cambio que ya incumple un comportamiento automatizado. Solo un proceso de excepción documentado y aprobado podría alterar la política, no un ignore de fallos sin control.
+
+**C)**
+
+Permiten diagnosticar incidentes, seguir la operación entre capas y conocer qué regla rechazó una petición. En una adopción fallida registrar timestamp, correlationId/requestId, ruta, código HTTP, código de error, mascotaId, adoptanteId seudonimizado, regla de rechazo y tiempo de respuesta. En autenticación registrar fecha, resultado exitoso/fallido, identificador técnico de usuario si aplica, IP con medidas de privacidad, razón técnica controlada, intentos y correlationId. No registrar la contraseña ni el JWT.
+
+**D)**
+
+| Registrar | Nunca registrar |
+| --- | --- |
+| requestId, traceId, timestamp, método HTTP, ruta, status, latencia | Contraseñas, passwordHash BCrypt, JWT, refresh token, claves de firma. |
+| mascotaId, solicitudId, adoptanteId interno cuando sea necesario | URI Mongo con usuario/contraseña, connection strings completas, secretos de Azure/GitHub. |
+| errorCode, nombre de regla, transición de estados, identificador de servicio | Body completo del login, direcciones, teléfonos y datos personales innecesarios. |
+| Versión de despliegue/commit, excepción en registros internos protegidos | Stack trace completo devuelto al cliente o tokens en URLs. |
+
+**E)**
+
+El log interno debe aportar información técnica suficiente para investigar sin exponer secretos y estar protegido por controles de acceso/retención. El cliente debe recibir un código HTTP y un mensaje estable, claro y breve, sin detalles de infraestructura ni stack trace. Ejemplo: log seguro “requestId=abc123, adopcion_rechazada, codigo=PET_INCOMPATIBLE, mascotaId=masc-013, status=422”; respuesta HTTP “422, code=PET_INCOMPATIBLE, message=La mascota no es compatible con la declaración”.
