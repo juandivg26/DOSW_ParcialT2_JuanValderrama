@@ -220,6 +220,8 @@ La autenticación inválida genera normalmente 401; un usuario autenticado sin p
 
 ### PUNTO 6
 
+![Diagrama de despliegue](docs/uml/diagrama-despliegue.png)
+
 **A)**
 
 | Etapa | Propósito y acciones típicas |
