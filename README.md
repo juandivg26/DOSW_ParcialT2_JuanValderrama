@@ -151,7 +151,59 @@ Debe definirse una prioridad en las validaciones; no debe depender del orden acc
 
 Cualquiera que sea el primer error de negocio reportado, no debe crearse la solicitud, ni modificarse mascota.estado, ni registrarse aplazamiento o actividad parcial.
 
+### PUNTO 2
 
+#### Diagrama de componentes general
+![Componentes general](docs/uml/componentes-general.png)
+**Descripción:** muestra el sistema visto desde afuera: el Front-End de Paw Connect consume la API REST del Back-End (Spring Boot), y el Back-End persiste la información en MongoDB.
+
+**Justificación:** se aplica el patrón cliente-servidor: el cliente pide y el servidor responde. La comunicación es stateless (cada petición lleva su JWT), lo que permite que el Front-End y la base de datos cambien sin afectar al otro lado mientras se respete el contrato de la API.
+
+#### Diagrama de componentes específico (MVC)
+![Componentes específico](docs/uml/componentes-especifico.png)
+**Descripción:** muestra la organización interna del Back-End por capas: Controller, Mapper IN, Service, Mapper OUT y Repository, conectadas con MongoDB. Cada dominio (Auth, Mascota, Adopción) tiene su componente en cada capa.
+
+**Justificación:** cada capa tiene una sola responsabilidad (SRP). El Controller solo maneja HTTP, el Service concentra las reglas de negocio y el Repository solo accede a MongoDB. Los componentes se conectan mediante interfaces e inyección de dependencias por constructor (inversión de dependencias), lo que da bajo acoplamiento y permite probar cada capa con mocks.
+
+#### Diagrama de clases (dominio)
+![Diagrama de clases](docs/uml/diagrama-clases.png)
+**Descripción:** muestra las clases del dominio con sus atributos, métodos y relaciones: la jerarquía de refugios, Mascota, SolicitudAdopcion, Usuario y sus enumeraciones.
+
+#### Preguntas
+
+**(a) ¿Qué problemas aparecen cuando no se separan correctamente las capas?**
+
+Si las capas se mezclan, el código se acopla: un cambio en la base de datos o en el formato HTTP obliga a tocar la lógica de negocio, las reglas se duplican y las pruebas se vuelven difíciles porque no se puede aislar cada parte con mocks.
+
+*Ejemplo del caso:* si AdopcionController validara la compatibilidad, cambiara el estado de la mascota y guardara directamente en MongoDB, esa lógica no se podría reutilizar ni probar sin levantar el servidor y la base de datos. En nuestro diseño las responsabilidades quedan así:
+- AdopcionController recibe la petición, valida el DTO con @Valid y llama al servicio.
+- AdopcionServiceImpl aplica las reglas: mascota DISPONIBLE, una sola solicitud activa, compatibilidad y fecha.
+- AdopcionRepository solo guarda y consulta en MongoDB.
+
+**(b) ¿Qué diferencia existe entre un validador, una utilidad y un servicio?**
+
+| Tipo | Responsabilidad | Ejemplo en el diseño |
+| --- | --- | --- |
+| Validador | Verifica que los datos cumplan una regla antes de procesarlos. No guarda nada. | AdopcionValidator: revisa la compatibilidad entre la declaración y la mascota, y que la fecha esté entre 1 y 15 días. |
+| Utilidad | Función genérica, estática y reutilizable, sin reglas de negocio ni estado. | FechaUtils: calcula los días entre hoy y la fecha de recibimiento. |
+| Servicio | Orquesta el caso de uso: llama al validador, al repositorio y a los mappers, y aplica las reglas de negocio. | AdopcionServiceImpl: crea la solicitud APROBADA y pasa la mascota a EN_PROCESO. |
+
+**(c) ¿Qué diferencia existe entre el Mapper IN y el Mapper OUT?**
+
+| Mapper | Ubicación | Transforma |
+| --- | --- | --- |
+| Mapper IN | controller/mappers | RequestDTO → objeto de dominio, y dominio → ResponseDTO. Es la frontera con el cliente. |
+| Mapper OUT | persistence/mappers | Objeto de dominio ↔ Document de MongoDB. Es la frontera con la base de datos. |
+
+Gracias a esta separación, el dominio no conoce ni el formato JSON de la API ni la estructura de MongoDB.
+
+**(d) ¿En qué componente se ejecuta cada una de las tres reglas del punto 1?**
+
+| Regla | Componente | Por qué |
+| --- | --- | --- |
+| Edad entre 0 y 360 meses (entrada) | DTO de request, validado con @Valid en MascotaController | Es una regla de formato y rango que no necesita consultar nada. Se rechaza antes de llegar al negocio, con 400. |
+| El nodo debe existir y ser de tipo REFUGIO (negocio) | MascotaServiceImpl, que consulta el repositorio de nodos | Necesita leer la jerarquía guardada en MongoDB. Responde 404 si no existe y 422 si no es REFUGIO. |
+| Un adoptante solo puede tener una solicitud activa (negocio) | AdopcionServiceImpl, que consulta AdopcionRepository | Depende de las solicitudes que ya existen para ese adoptante. Responde 409. |
 
 
 
