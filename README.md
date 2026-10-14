@@ -190,12 +190,12 @@ Si las capas se mezclan, el código se acopla: un cambio en la base de datos o e
 
 **(c) ¿Qué diferencia existe entre el Mapper IN y el Mapper OUT?**
 
-| Mapper | Ubicación | Transforma |
+| Mapper | Qué transforma | Ejemplo |
 | --- | --- | --- |
-| Mapper IN | controller/mappers | RequestDTO → objeto de dominio, y dominio → ResponseDTO. Es la frontera con el cliente. |
-| Mapper OUT | persistence/mappers | Objeto de dominio ↔ Document de MongoDB. Es la frontera con la base de datos. |
+| Mapper IN | Lo que **entra** al Service: RequestDTO → objeto de dominio, y Document de MongoDB → objeto de dominio | MascotaMapperIn convierte CrearMascotaRequestDTO en Mascota |
+| Mapper OUT | Lo que **sale** del Service: objeto de dominio → ResponseDTO, y objeto de dominio → Document para persistir | MascotaMapperOut convierte Mascota en MascotaResponseDTO y en MascotaDocument |
 
-Gracias a esta separación, el dominio no conoce ni el formato JSON de la API ni la estructura de MongoDB.
+Así el dominio no conoce el formato JSON de la API ni la estructura de MongoDB, y el Service siempre trabaja con objetos de dominio.
 
 **(d) ¿En qué componente se ejecuta cada una de las tres reglas del punto 1?**
 
@@ -272,6 +272,68 @@ La autenticación inválida genera normalmente 401; un usuario autenticado sin p
 `Justificación:` permite separar autenticación de las operaciones REST y probar fácilmente el acceso en Swagger Authorize, sin sesiones de servidor. No sustituye la seguridad de transporte HTTPS. Para un MVP académico resulta apropiado si se controla la expiración, el secreto, la autorización y la protección de credenciales.
 
 `Enunciado contradictorio:` la matriz dice “Iniciar sesión: sin token → 401”, pero el login necesita aceptar credenciales sin token previo. Debe corregirse esa fila en el contrato y justificarlo. 
+
+### PUNTO 5
+
+#### Escenarios de prueba de "Adoptar una mascota" (TDD)
+
+Las pruebas se escriben **antes** que el código, siguiendo el ciclo **Red → Green → Refactor**:
+
+1. **Red:** se escribe la prueba de un escenario (por ejemplo, P03 "mascota no disponible") y se ejecuta. Falla porque la regla aún no existe.
+2. **Green:** se escribe el código mínimo en AdopcionServiceImpl para que la prueba pase.
+3. **Refactor:** se limpia el código sin cambiar su comportamiento (por ejemplo, se mueven las reglas a AdopcionValidator) y se vuelven a correr todas las pruebas para confirmar que siguen en verde.
+
+Cada prueba sigue la estructura **Arrange / Act / Assert**, y los repositorios se reemplazan por mocks (Mockito) para que no dependan de MongoDB.
+
+| ID | Escenario | Datos (Arrange) | Resultado esperado (Assert) |
+| --- | --- | --- | --- |
+| P01 | Adopción exitosa (E10) | Mascota DISPONIBLE, adoptante sin solicitud activa, declaración compatible, fecha a 5 días | 201. La solicitud se crea APROBADA y la mascota pasa a EN_PROCESO. Se guarda una vez cada una. |
+| P02 | Fecha en el límite inferior | Fecha a 1 día de hoy | 201. Se crea la solicitud. |
+| P03 | Fecha en el límite superior | Fecha a 15 días de hoy | 201. Se crea la solicitud. |
+| P04 | Mascota no existe | mascotaId inexistente | 404 MASCOTA_NO_ENCONTRADA. No se guarda nada. |
+| P05 | Mascota no disponible (E06) | Mascota en estado EN_PROCESO | 409 E06. La mascota conserva su estado y no se crea la solicitud. |
+| P06 | Segunda solicitud (E8) | El adoptante ya tiene una solicitud APROBADA | 409 E8. No se crea otra solicitud ni se modifica la segunda mascota. |
+| P07 | Incompatible con niños (E04) | Declara niños y la mascota no es compatible con niños | 422 E04. La mascota sigue DISPONIBLE. |
+| P08 | Incompatible con otras mascotas (E04) | Declara otras mascotas y la mascota no es compatible | 422 E04. La mascota sigue DISPONIBLE. |
+| P09 | Incompatible con vivienda reducida (E04) | Declara vivienda reducida y la mascota no es apta para espacios reducidos | 422 E04. La mascota sigue DISPONIBLE. |
+| P10 | Fecha hoy (E07) | Fecha a 0 días | 422 E07. No se crea la solicitud ni se modifica la mascota. |
+| P11 | Fecha muy lejana (E07) | Fecha a 16 días | 422 E07. No se crea la solicitud ni se modifica la mascota. |
+| P12 | Varias fallas a la vez | Mascota EN_PROCESO **y** declaración incompatible | 409 E06. Gana la primera regla del orden y la de compatibilidad nunca se evalúa. |
+| P13 | Datos de entrada inválidos | Falta la declaración o la fecha | 400 DATOS_INVALIDOS. El servicio nunca se llama. |
+| P14 | Sin token / rol incorrecto | Sin JWT, o con JWT de ADMIN | 401 / 403. El controlador rechaza antes de llegar al servicio. |
+
+P01 a P12 son **pruebas unitarias del servicio**. P13 y P14 son **pruebas del controlador** con MockMvc, porque la validación del DTO y la seguridad viven en esa capa.
+
+#### Cómo se comprueba el orden y que no se modifique nada ante una falla
+
+- **El orden de las validaciones:** con InOrder de Mockito se verifica que primero se consulta la mascota, después las solicitudes activas del adoptante y al final se guarda. En P12 se verifica que la regla de compatibilidad **no se ejecuta** cuando la mascota ya no está disponible, lo que demuestra que se respeta el orden 404 → 409 → 422.
+- **Que no se cree la solicitud:** en todos los escenarios de error se verifica verify(solicitudRepository, never()).save(any()).
+- **Que no se modifique la mascota:** se verifica verify(mascotaRepository, never()).save(any()) y además se comprueba con assertEquals que el objeto mascota sigue en su estado original (DISPONIBLE o EN_PROCESO).
+- **Que se lance el error correcto:** con assertThrows se verifica el tipo de excepción y su código (E06, E8, E04, E07).
+- **Fechas estables:** se inyecta un Clock fijo en el servicio para que "hoy" sea siempre la misma fecha y las pruebas de 1, 15 y 16 días no fallen según el día en que se ejecuten.
+
+#### Preguntas para la revisión con el equipo de Calidad
+
+**a ¿Cómo aportan las pruebas evidencia del cumplimiento de las reglas de negocio? ¿Qué se verificaría con pruebas unitarias?**
+
+Cada regla del caso de uso tiene al menos una prueba que la ejerce, tanto en el camino exitoso como en el de rechazo. Si la prueba pasa, queda evidencia automática y repetible de que la regla se cumple. Si alguien la rompe después, la prueba falla y el pipeline lo detecta antes de desplegar. El reporte de JaCoCo complementa esa evidencia mostrando qué líneas y ramas del código se ejecutaron.
+
+Con **pruebas unitarias** se verifica la lógica aislada de cada clase, sin base de datos ni servidor:
+- en el **servicio**: las reglas de negocio (disponibilidad, solicitud activa, compatibilidad, rango de fechas, cambio de estado) y que no se guarde nada ante un error;
+- en el **validador**: cada combinación de compatibilidad y los límites de las fechas;
+- en el **dominio**: métodos como estaDisponible(), esCompatibleCon() y puedeAplazarse().
+
+Lo que depende de varias capas juntas (la validación del DTO, la seguridad con JWT y la respuesta HTTP real) se verifica con pruebas del controlador o de integración.
+
+**b ¿Las pruebas por sí solas garantizan la ausencia de errores?**
+
+No. Las pruebas demuestran la **presencia** de errores, no su ausencia: solo comprueban los escenarios que alguien pensó en escribir. Un 100% de cobertura indica que todas las líneas se ejecutaron, no que todos los casos posibles estén bien. Puede quedar un escenario sin prueba, una prueba mal planteada, o fallas que solo aparecen con la base de datos real, con concurrencia (dos adopciones simultáneas de la misma mascota) o en el ambiente desplegado.
+
+Por eso las pruebas se complementan con:
+- el análisis estático (SonarQube);
+- la revisión de código en los Pull Requests;
+- las pruebas funcionales en Swagger;
+- los logs para detectar fallas en producción.
 
 ### PUNTO 6
 
