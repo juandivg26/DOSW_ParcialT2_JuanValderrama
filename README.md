@@ -44,7 +44,7 @@ DOSW_ParcialT2_JuanValderrama/
 ├── src/main/java/edu/dosw/parcial/
 │   ├── controller/               # endpoints REST
 │   │   ├── dtos/request|response # objetos de entrada/salida de la API
-│   │   ├── mappers/              # Mapper IN: DTO ↔ Dominio
+│   │   ├── mappers/              # Mapper IN: lo que entra al Service (RequestDTO/Document → Dominio)
 │   │   └── handlers/             # GlobalExceptionHandler
 │   ├── core/
 │   │   ├── services/             # lógica de negocio
@@ -54,7 +54,7 @@ DOSW_ParcialT2_JuanValderrama/
 │   ├── persistence/
 │   │   ├── entities/             # clases @Document (MongoDB)
 │   │   ├── repositories/         # MongoRepository
-│   │   └── mappers/              # Mapper OUT: Dominio ↔ Document
+│   │   └── mappers/              # Mapper OUT: lo que sale del Service (Dominio → ResponseDTO/Document)
 │   ├── config/                   # SecurityConfig, SwaggerConfig
 │   └── main/                     # clase @SpringBootApplication
 ├── src/main/resources/application.yaml
