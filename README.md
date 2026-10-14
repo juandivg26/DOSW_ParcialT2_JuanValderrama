@@ -216,6 +216,9 @@ Gracias a esta separación, el dominio no conoce ni el formato JSON de la API ni
 
 
 ### PUNTO 3
+
+![Diagrama BD no relacional](docs/uml/diagrama-bd.jpeg)
+
 **Propuesta:** usar ambos. Embebidos para datos pequeños que se consultan con su padre y cambian con él; referenciados para entidades compartidas, consultadas independientemente o que crecen con el tiempo. 
 
 | Documento | Modelo Recomendado | Justificacion                                                                   |
